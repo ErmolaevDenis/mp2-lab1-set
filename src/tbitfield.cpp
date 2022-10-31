@@ -13,7 +13,9 @@ TBitField::TBitField(int len)
 {
 	if (len > 0)
 	{
-		MemLen = (len) / (sizeof(TELEM) * 8) + 1;
+		MemLen = (len) / (sizeof(TELEM) * 8);
+		if (MemLen * sizeof(TELEM) * 8 < len)
+			++MemLen;
 		BitLen = len;
 		pMem = new TELEM[MemLen];
 		memset(pMem, 0, MemLen * sizeof(TELEM));
@@ -43,7 +45,7 @@ int TBitField::GetMemIndex(const int n) const // индекс Мем для би
 
 TELEM TBitField::GetMemMask(const int n) const // битовая маска для бита n
 {
-	return 1 << (n & (bitsInElem - 1));
+	return 1 << (n & (sizeof(TELEM) * 8 - 1));
 }
 
 // доступ к битам битового поля
@@ -81,8 +83,12 @@ TBitField& TBitField::operator=(const TBitField& bf) // присваивание
 	if (this == &bf)
 		return *this;
 
-	TBitField tmp(bf);
-	swap(*this, tmp);
+	TELEM* tmp = new TELEM[bf.MemLen];
+	copy(bf.pMem, bf.pMem + bf.MemLen, tmp);
+	delete[] pMem;
+	BitLen = bf.BitLen;
+	MemLen = bf.MemLen;
+	pMem = tmp;
 	return *this;
 }
 
@@ -104,29 +110,22 @@ int TBitField::operator!=(const TBitField& bf) const // сравнение
 
 TBitField TBitField::operator|(const TBitField& bf) // операция "или"
 {
-	if (BitLen = bf.BitLen)
-	{
-		TBitField tmp(*this);
-		for (int i = 0; i < bf.MemLen; i++)
-			tmp.pMem[i] |= bf.pMem[i];
-		return tmp;
-	}
-	else
-		throw length_error("TBitField objects have different size");
+	int bl_max = max(BitLen, bf.BitLen);
+	int ml_min = min(MemLen, bf.MemLen);
+	TBitField tmp(bl_max);
+	for (int i = 0; i < ml_min; i++)
+		tmp.pMem[i] = pMem[i] | bf.pMem[i];
+	return tmp;
 }
 
 TBitField TBitField::operator&(const TBitField& bf) // операция "и"
 {
-	if (BitLen = bf.BitLen)
-	{
-		TBitField tmp(*this);
-		for (int i = 0; i < bf.MemLen; i++)
-			tmp.pMem[i] &= bf.pMem[i];
-		return tmp;
-	}
-	else
-		throw length_error("TBitField objects have different size");
-
+	int bl_max = max(BitLen, bf.BitLen);
+	int ml_min = min(MemLen, bf.MemLen);
+	TBitField tmp(bl_max);
+	for (int i = 0; i < ml_min; i++)
+		tmp.pMem[i] = pMem[i] & bf.pMem[i];
+	return tmp;
 }
 
 TBitField TBitField::operator~(void) // отрицание
@@ -151,9 +150,9 @@ istream& operator>>(istream& istr, TBitField& bf) // ввод
 	for (int i = 0; i < len; i++)
 	{
 		istr >> ent;
-		if (ent == 49)
+		if (ent == 49 || ent == 1)
 			bf.SetBit(i);
-		else if (ent == 48)
+		else if (ent == 48 || ent == 0)
 			bf.ClrBit(i);
 		else
 			throw invalid_argument("Bit can only be equal to 0 or 1");
@@ -170,11 +169,4 @@ ostream& operator<<(ostream& ostr, const TBitField& bf) // вывод
 		else
 			ostr << '0';
 	return ostr;
-}
-
-void swap(TBitField& lhs, TBitField& rhs)
-{
-	std::swap(lhs.BitLen, rhs.BitLen);
-	std::swap(lhs.MemLen, rhs.MemLen);
-	std::swap(lhs.pMem, rhs.pMem);
 }

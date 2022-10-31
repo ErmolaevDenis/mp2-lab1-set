@@ -58,35 +58,27 @@ TSet& TSet::operator=(const TSet& s) // присваивание
     if (this == &s)
         return *this;
 
-    this->MaxPower = s.MaxPower;
-    this->BitField = s.BitField;
+    MaxPower = s.MaxPower;
+    BitField = s.BitField;
     return *this;
 }
 
-bool TSet::operator== (const TSet& s) const // сравнение
+int TSet::operator== (const TSet& s) const // сравнение
 {
     return BitField == s.BitField;
 }
 
-bool TSet::operator!= (const TSet& s) const // сравнение
+int TSet::operator!= (const TSet& s) const // сравнение
 {
     return !(*this == s);
 }
 
 TSet TSet::operator+(const TSet& s) // объединение
 {
-    if (this->MaxPower >= s.MaxPower)
-    {
-        TSet tmp(this->MaxPower);
-        tmp.BitField = this->BitField | s.BitField;
-        return tmp;
-    }
-    else
-    {
-        TSet tmp(s.MaxPower);
-        tmp.BitField = this->BitField | s.BitField;
-        return tmp;
-    }
+    int mp_max = max(MaxPower, s.MaxPower);
+    TSet tmp(mp_max);
+    tmp.BitField = BitField | s.BitField;
+    return tmp;
 }
 
 TSet TSet::operator+(const int Elem) // объединение с элементом
@@ -105,18 +97,10 @@ TSet TSet::operator-(const int Elem) // разность с элементом
 
 TSet TSet::operator*(const TSet& s) // пересечение
 {
-    if (this->MaxPower >= s.MaxPower)
-    {
-        TSet tmp(this->MaxPower);
-        tmp.BitField = this->BitField & s.BitField;
-        return tmp;
-    }
-    else
-    {
-        TSet tmp(s.MaxPower);
-        tmp.BitField = this->BitField & s.BitField;
-        return tmp;
-    }
+    int mp_max = max(MaxPower, s.MaxPower);
+    TSet tmp(mp_max);
+    tmp.BitField = BitField & s.BitField;
+    return tmp;
 }
 
 TSet TSet::operator~(void) // дополнение
@@ -129,20 +113,15 @@ TSet TSet::operator~(void) // дополнение
 
 istream& operator>>(istream& istr, TSet& s) // ввод
 {
-    string ent;
-    int n = s.GetMaxPower();
-    for (int i = 0; i < n; i++)
+    char sym = ',';
+    size_t tmp;
+    while (sym != '.')
     {
-        cout << i << " yavlyaetsya elemntom mnozhestva?" << endl;
-        istr >> ent;
-        if ((ent == "Da") || (ent == "Yes") || (ent == "+") || (ent == "da") || (ent == "yes"))
-            s.InsElem(i);
-        else if ((ent == "Net") || (ent == "No") || (ent == "-") || (ent == "net") || (ent == "no"))
-            s.DelElem(i);
-        else
-            throw invalid_argument("Otvet mozhet bit' tol'ko da ili net");
-        cout << endl;
+        istr >> tmp >> sym;
+        if (tmp < s.MaxPower && tmp > 0)
+            s.InsElem(tmp);
     }
+    return istr;
 }
 
 ostream& operator<<(ostream& ostr, const TSet& s) // вывод
