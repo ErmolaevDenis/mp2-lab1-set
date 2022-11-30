@@ -146,13 +146,13 @@ TBitField TBitField::operator~(void) // отрицание
 istream& operator>>(istream& istr, TBitField& bf) // ввод
 {
 	int len = bf.GetLength();
-	TELEM ent;
+	unsigned int ent;
 	for (int i = 0; i < len; i++)
 	{
 		istr >> ent;
-		if (ent == 49 || ent == 1)
+		if (ent == 1)
 			bf.SetBit(i);
-		else if (ent == 48 || ent == 0)
+		else if (ent == 0)
 			bf.ClrBit(i);
 		else
 			throw invalid_argument("Bit can only be equal to 0 or 1");
